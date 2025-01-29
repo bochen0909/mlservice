@@ -50,23 +50,28 @@ async def hello():
     """
     return {"message": "Hello World"}
 
-def setup_routes():
-    """Setup all registered routes and import external routes."""
+def setup_routes(module_name: str = "external_routes"):
+    """
+    Setup all registered routes and import external routes.
+    
+    Args:
+        module_name (str): Name of the external routes module to import. Defaults to "external_routes".
+    """
     # Import demo routes
     import mlservice.demo.routes  # noqa
 
     # Import external routes as a Python module
     try:
-        registry.import_routes_from_module("external_routes")
+        registry.import_routes_from_module(module_name)
     except ValueError as e:
-        print(f"Warning: Failed to import external routes: {e}")
+        print(f"Warning: Failed to import external routes from {module_name}: {e}")
 
     # Apply all registered routes to the FastAPI app
     registry.apply_routes(app)
 
 def main():
     """Run the FastAPI application."""
-    setup_routes()
+    setup_routes("external_routes")
     parser = argparse.ArgumentParser(description="Run the ML Service API server")
     parser.add_argument("--host", default="0.0.0.0", help="Host to bind the server to")
     parser.add_argument("--port", type=int, default=8000, help="Port to bind the server to")
