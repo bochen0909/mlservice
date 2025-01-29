@@ -55,10 +55,11 @@ def setup_routes():
     # Import demo routes
     import mlservice.demo.routes  # noqa
 
-    # Example of importing routes from external path
-    external_routes = Path(__file__).parent.parent / "external_routes"
-    if external_routes.exists():
-        registry.import_routes_from_path(str(external_routes))
+    # Import external routes as a Python module
+    try:
+        registry.import_routes_from_module("external_routes")
+    except ValueError as e:
+        print(f"Warning: Failed to import external routes: {e}")
 
     # Apply all registered routes to the FastAPI app
     registry.apply_routes(app)

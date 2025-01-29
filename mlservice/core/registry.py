@@ -86,26 +86,37 @@ class RouteRegistry:
                 endpoint(route['path'], **route['kwargs'])(route['handler'])
         app.include_router(router)
 
-    def import_routes_from_path(self, path: str) -> None:
+    def import_routes_from_module(self, module_name: str) -> None:
         """
-        Import routes from Python files in the specified path.
+        Import routes from a Python module and its submodules.
         
         Args:
-            path: Directory path containing route definitions
+            module_name: Full Python module name (e.g. 'external_routes')
         """
-        path = Path(path)
-        if not path.exists():
-            raise ValueError(f"Path does not exist: {path}")
-        
-        for file in path.rglob("*.py"):
-            if file.name.startswith("_"):
-                continue
+        try:
+            module = importlib.import_module(module_name)
+            # Get the module directory to scan for submodules
+            module_path = Path(module.__file__).parent
             
-            module_name = f"mlservice.imported_routes.{file.stem}"
-            spec = importlib.util.spec_from_file_location(module_name, file)
-            if spec and spec.loader:
-                module = importlib.util.module_from_spec(spec)
-                spec.loader.exec_module(module)
+            # Import all non-private Python files in the module directory
+            for file in module_path.rglob("*.py"):
+                if file.name.startswith("_"):
+                    continue
+                
+                # Calculate relative path from module root to build full module name
+                relative_path = file.relative_to(module_path)
+                submodule_parts = list(relative_path.parent.parts)
+                if submodule_parts == ["."]:
+                    submodule_parts = []
+                    
+                submodule_name = ".".join(
+                    [module_name] + submodule_parts + [file.stem]
+                )
+                
+                if submodule_name != module_name:  # Skip the root module
+                    importlib.import_module(submodule_name)
+        except ImportError as e:
+            raise ValueError(f"Could not import module {module_name}: {e}")
 
 # Create the singleton instance
 registry = RouteRegistry.get_instance()
