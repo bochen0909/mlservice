@@ -12,6 +12,7 @@ import uvicorn
 from fastapi import FastAPI
 
 from mlservice.core.registry import registry
+from mlservice.core import upload_routes # noqa: F401
 
 app = FastAPI(
     title="ML Service",
