@@ -1,16 +1,25 @@
 """
-Test cases for main FastAPI application.
+Tests for the main FastAPI application.
 """
-
 from fastapi.testclient import TestClient
-from mlservice.main import app
+from mlservice.main import app, setup_routes
 
-client = TestClient(app)
-
-def test_hello():
-    """
-    Test hello endpoint returns correct message.
-    """
+def test_root_endpoint():
+    """Test the root endpoint."""
+    client = TestClient(app)
     response = client.get("/")
     assert response.status_code == 200
     assert response.json() == {"message": "Hello World"}
+
+def test_setup_routes():
+    """Test route setup and integration."""
+    setup_routes()
+    client = TestClient(app)
+    
+    # Test core demo route is registered
+    response = client.get("/demo")
+    assert response.status_code == 200
+    
+    # Test external routes are registered if available
+    response = client.get("/external")
+    assert response.status_code == 200
