@@ -74,3 +74,38 @@ def test_upload_file_invalid_file():
         
         # Assert
         assert response.status_code == 422  # FastAPI validation error
+
+def test_download_file_success(tmp_path):
+    # Setup
+    test_file_content = b"test content"
+    file_path = os.path.join(str(tmp_path), "data", "2025", "01", "01", "12", "00", "00")
+    os.makedirs(file_path, exist_ok=True)
+    test_file = os.path.join(file_path, "test.txt")
+    with open(test_file, "wb") as f:
+        f.write(test_file_content)
+    
+    with patch.dict(os.environ, {"ML_HOME": str(tmp_path)}):
+        # Execute
+        response = client.get("/download/2025/01/01/12/00/00/test.txt")
+        
+        # Assert
+        assert response.status_code == 200
+        assert response.content == test_file_content
+
+def test_download_file_not_found(tmp_path):
+    with patch.dict(os.environ, {"ML_HOME": str(tmp_path)}):
+        # Execute
+        response = client.get("/download/2025/01/01/12/00/00/nonexistent.txt")
+        
+        # Assert
+        assert response.status_code == 404
+        assert "File not found" in response.json()["detail"]
+
+def test_download_file_missing_ml_home():
+    with patch.dict(os.environ, {}, clear=True):
+        # Execute
+        response = client.get("/download/2025/01/01/12/00/00/test.txt")
+        
+        # Assert
+        assert response.status_code == 500
+        assert "ML_HOME environment variable not set" in response.json()["detail"]
