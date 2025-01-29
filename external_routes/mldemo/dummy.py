@@ -1,8 +1,10 @@
 from typing import Any, Dict, Optional
-from mlservice.core import MLModel, ModelParams
+
+from fastapi import APIRouter
+from mlservice.core import MLModel, create_model_endpoints
 
 class DummyModel(MLModel):
-    def __init__(self, params: ModelParams):
+    def __init__(self, params=None):
         super().__init__(params)
         self.model = None
 
@@ -20,3 +22,5 @@ class DummyModel(MLModel):
     def __str__(self):
         return f"DummyModel: {self.params}"
  
+
+dummy_endpoints:APIRouter = create_model_endpoints(DummyModel, "dummy")

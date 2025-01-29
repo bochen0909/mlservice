@@ -4,22 +4,92 @@ from datetime import datetime
 import uuid
 import json
 from pathlib import Path
-from typing import Optional, Union, Dict, Any
+from typing import Optional, Union, Dict, Any, Type
 
 import pandas as pd
 import joblib
+from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel
 from .utils import load_data, load_model
 
-class ModelParams(BaseModel):
-    pass
+
+
+class TrainRequest(BaseModel):
+    train_path: str
+    eval_path: Optional[str] = None
+    test_path: Optional[str] = None
+    params: Optional[str] = None
+
+class PredictRequest(BaseModel):
+    data_path: str
+    model_path: str
+
+class EvalRequest(BaseModel):
+    data_path: str
+    model_path: str
+
+def create_model_endpoints(model_class: Type["MLModel"], model_name: str) -> APIRouter:
+    """
+    Create FastAPI endpoints for an MLModel class.
+    
+    Args:
+        model_class: MLModel class to create endpoints for
+        model_name: Name of the model for URL paths
+        
+    Returns:
+        FastAPI router with /train, /predict, and /eval endpoints
+    """
+    router = APIRouter(prefix=f"/model/{model_name}")
+    
+    @router.post("/train")
+    async def train_model(request: TrainRequest):
+        try:
+            model = model_class(request.params)
+            result = model.train(
+                train_path=request.train_path,
+                eval_path=request.eval_path,
+                test_path=request.test_path
+            )
+            return result
+        except Exception as e:
+            raise HTTPException(status_code=500, detail=str(e))
+    
+    @router.post("/predict")
+    async def predict(request: PredictRequest):
+        try:
+            # Load latest model
+            model = load_model(request.model_path)
+            if not model:
+                raise HTTPException(status_code=404, detail=f"Model {model_name} not found")
+            result = model.predict(data_path=request.data_path)
+            return result
+        except Exception as e:
+            raise HTTPException(status_code=500, detail=str(e))
+    
+    @router.post("/eval")
+    async def evaluate(request: EvalRequest):
+        try:
+            # Load latest model
+            model = load_model(request.model_path)
+            if not model:
+                raise HTTPException(status_code=404, detail=f"Model {model_name} not found")
+            result = model.evaluate(data_path=request.data_path)
+            return result
+        except Exception as e:
+            raise HTTPException(status_code=500, detail=str(e))
+    
+    return router
 
 
 
 class MLModel(ABC):
     """Base class for ML models with training, prediction, and evaluation capabilities."""
     
-    def __init__(self, params: ModelParams) -> None:
+    def __init__(self, params: Optional[Union[str|dict]] = None):
+        if params is None:
+            params = {}
+        elif isinstance(params, str):
+            params = json.loads(params)
         self.params = params
         self.fitted_ = False
     
@@ -72,7 +142,7 @@ class MLModel(ABC):
         
         # Save parameters
         with open(model_dir / "params.json", 'w') as f:
-            json.dump(self.params.model_dump(), f, indent=2)
+            json.dump(self.params, f, indent=2)
             
         # Save metadata
         metadata = {
@@ -80,7 +150,7 @@ class MLModel(ABC):
             'train_path': train_path,
             'eval_path': eval_path,
             'test_path': test_path,
-            "model_dir": str(model_dir),
+            "model_path": str(model_dir),
             'metrics': metrics
         }
         

@@ -4,11 +4,10 @@ from pathlib import Path
 import pandas as pd
 import joblib
 from external_routes.mldemo.dummy import DummyModel
-from mlservice.core import ModelParams
 
 @pytest.fixture
 def dummy_model():
-    return DummyModel(ModelParams())
+    return DummyModel()
 
 @pytest.fixture
 def sample_data():
@@ -69,7 +68,7 @@ def test_load_model(dummy_model, sample_data, tmp_path):
     metadata = dummy_model.train(str(train_path))
     assert dummy_model.fitted_
     # Get model directory from metadata
-    model_path = metadata['model_dir']
+    model_path = metadata['model_path']
     
     # Load model from saved file
     model_path = os.path.join(model_path, "model.joblib")
