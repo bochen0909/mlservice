@@ -7,7 +7,6 @@ at /docs endpoint.
 """
 
 import argparse
-from pathlib import Path
 import uvicorn
 from fastapi import FastAPI
 

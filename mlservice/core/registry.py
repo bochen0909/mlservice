@@ -1,9 +1,8 @@
 """
 Core route registry functionality.
 """
-from typing import Any, Callable, Dict, List, Optional, Type
+from typing import Any, Callable, Dict, List
 import importlib.util
-import os
 from pathlib import Path
 from fastapi import FastAPI, APIRouter
 

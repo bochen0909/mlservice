@@ -5,7 +5,7 @@ import pytest
 from fastapi import FastAPI
 from fastapi.testclient import TestClient
 
-from mlservice.core.registry import RouteRegistry, registry
+from mlservice.core.registry import RouteRegistry
 from mlservice.main import setup_routes, app
 from external_routes.demo.models import Item
 
