@@ -21,7 +21,8 @@ class MLModel(ABC):
     
     def __init__(self, params: ModelParams) -> None:
         self.params = params
-        
+        self.fitted_ = False
+    
     def _get_model_dir(self, name: str, version: str) -> Path:
         """Generate model directory path with versioning."""
         ml_home = os.getenv('ML_HOME')
@@ -52,7 +53,8 @@ class MLModel(ABC):
         
         # Train model
         self._train(train_data, eval_data)
-        
+        self.fitted_ = True
+
         # Evaluate on available datasets
         metrics = {}
         if train_data is not None:
@@ -70,7 +72,7 @@ class MLModel(ABC):
         
         # Save parameters
         with open(model_dir / "params.json", 'w') as f:
-            json.dump(self.params.dict(), f, indent=2)
+            json.dump(self.params.model_dump(), f, indent=2)
             
         # Save metadata
         metadata = {
@@ -78,12 +80,13 @@ class MLModel(ABC):
             'train_path': train_path,
             'eval_path': eval_path,
             'test_path': test_path,
+            "model_dir": str(model_dir),
             'metrics': metrics
         }
         
         with open(model_dir / "metadata.json", 'w') as f:
             json.dump(metadata, f, indent=2)
-            
+        
         return metadata
 
     @abstractmethod
@@ -100,6 +103,8 @@ class MLModel(ABC):
         Returns:
             Dict containing predictions
         """
+        if not self.fitted_:
+            raise ValueError("Model must be trained before prediction")
         data = load_data(data_path)
         return self._predict(data)
         
@@ -117,6 +122,8 @@ class MLModel(ABC):
         Returns:
             Dict containing evaluation metrics
         """
+        if not self.fitted_:
+            raise ValueError("Model must be trained before evaluation")
         data = load_data(data_path)
         return self._evaluate(data)
         

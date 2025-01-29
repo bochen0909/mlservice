@@ -13,7 +13,7 @@ def test_root_endpoint():
 
 def test_setup_routes():
     """Test route setup and integration."""
-    setup_routes(['external_routes', 'external_routes.demo'])
+    setup_routes(['external_routes'])
     client = TestClient(app)
     
     # Test external routes are registered if available

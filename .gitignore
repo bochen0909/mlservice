@@ -43,4 +43,5 @@ cdk.out/
 .user.yml
 *dbt.log*
 
-lambda/requirements.txt
+
+.coverage
