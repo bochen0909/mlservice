@@ -2,7 +2,6 @@ from fastapi import APIRouter, UploadFile, File, HTTPException
 from datetime import datetime
 import os
 import shutil
-from mlservice.core.registry import registry
 
 router = APIRouter()
 
@@ -31,5 +30,4 @@ async def upload_file(file: UploadFile = File(...)):
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
-# Register the router
-registry.register_router(router)
+

@@ -12,7 +12,7 @@ import uvicorn
 from fastapi import FastAPI
 
 from mlservice.core.registry import registry
-from mlservice.core import upload_routes # noqa: F401
+from mlservice.core.router import router as core_router
 
 app = FastAPI(
     title="ML Service",
@@ -30,6 +30,9 @@ app = FastAPI(
     openapi_url="/openapi.json",
     swagger_ui_parameters={"defaultModelsExpandDepth": 1}
 )
+
+# Include core routes
+app.include_router(core_router)
 
 @app.get("/", 
          tags=["General"],
