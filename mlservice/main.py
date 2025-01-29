@@ -1,5 +1,9 @@
 """
 Main FastAPI application module.
+
+This module provides the main FastAPI application with Swagger UI documentation 
+and dynamic route registration capabilities. The API documentation is available 
+at /docs endpoint.
 """
 
 import argparse
@@ -8,17 +12,41 @@ import uvicorn
 from fastapi import FastAPI
 
 from mlservice.core.registry import registry
+# Import all models to make them visible in Swagger UI
+from mlservice.demo import models, external_models
 
 app = FastAPI(
     title="ML Service",
-    description="Machine Learning Service API with dynamic route registration",
-    version="0.1.0"
+    description="""
+    Machine Learning Service API with dynamic route registration.
+    
+    Features:
+    - Dynamic route registration via registry pattern
+    - Support for external route integration
+    - Automatic Swagger/OpenAPI documentation
+    """,
+    version="0.1.0",
+    docs_url="/docs",
+    redoc_url="/redoc",
+    openapi_url="/openapi.json",
+    swagger_ui_parameters={"defaultModelsExpandDepth": 1}
 )
 
-@app.get("/")
+@app.get("/", 
+         tags=["General"],
+         summary="Root endpoint",
+         response_description="Welcome message object")
 async def hello():
     """
     Root endpoint returning a welcome message.
+    
+    Returns:
+        dict: A JSON object containing a welcome message
+        
+    Example response:
+        {
+            "message": "Hello World"
+        }
     """
     return {"message": "Hello World"}
 
