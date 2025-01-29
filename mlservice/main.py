@@ -12,8 +12,6 @@ import uvicorn
 from fastapi import FastAPI
 
 from mlservice.core.registry import registry
-# Import all models to make them visible in Swagger UI
-from mlservice.demo import models, external_models
 
 app = FastAPI(
     title="ML Service",
@@ -58,20 +56,25 @@ def setup_routes(module_names: list[str] | None = None):
         module_names (list[str] | None): List of external route module names to import.
             If None, no external routes are imported.
     """
-    # Import demo routes
-    import mlservice.demo.routes  # noqa
 
-    # Import external routes as a Python module
+    print(f"Setting up routes with module names: {module_names}")
+
     # Import external routes if provided
     if module_names:
         for module_name in module_names:
             try:
+                print(f"Attempting to import routes from module: {module_name}")
                 registry.import_routes_from_module(module_name)
+                print(f"Successfully imported routes from module: {module_name}")
             except ValueError as e:
                 print(f"Warning: Failed to import external routes from {module_name}: {e}")
+            except Exception as e:
+                print(f"Unexpected error importing routes from {module_name}: {str(e)}")
 
     # Apply all registered routes to the FastAPI app
+    print("Applying registered routes to FastAPI app")
     registry.apply_routes(app)
+    print("Finished applying routes")
 
 def main():
     """Run the FastAPI application."""

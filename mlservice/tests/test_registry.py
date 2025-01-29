@@ -7,7 +7,7 @@ from fastapi.testclient import TestClient
 
 from mlservice.core.registry import RouteRegistry, registry
 from mlservice.main import setup_routes, app
-from mlservice.demo.models import Item
+from external_routes.demo.models import Item
 
 def test_registry_singleton():
     """Test that RouteRegistry maintains singleton pattern."""
@@ -67,7 +67,7 @@ def test_multiple_methods():
 @pytest.fixture
 def client():
     """Create a test client with all routes registered."""
-    setup_routes()  # This will import demo routes
+    setup_routes(['external_routes', 'external_routes.demo'])  # Import both external and demo routes
     return TestClient(app)
 
 def test_demo_routes(client):

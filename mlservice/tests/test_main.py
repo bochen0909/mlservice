@@ -13,12 +13,8 @@ def test_root_endpoint():
 
 def test_setup_routes():
     """Test route setup and integration."""
-    setup_routes()
+    setup_routes(['external_routes', 'external_routes.demo'])
     client = TestClient(app)
-    
-    # Test core demo route is registered
-    response = client.get("/demo")
-    assert response.status_code == 200
     
     # Test external routes are registered if available
     response = client.get("/external")

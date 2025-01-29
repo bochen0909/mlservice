@@ -4,7 +4,7 @@ Demo routes to showcase the route registry functionality.
 from typing import Dict
 from fastapi import Path, Query
 from mlservice.core.registry import registry
-from mlservice.demo.models import Item, ItemResponse, ItemDetail
+from external_routes.demo.models import Item, ItemResponse, ItemDetail
 
 # Basic GET endpoint
 @registry.get("/demo", response_model=Dict[str, str])
