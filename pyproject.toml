@@ -1,0 +1,21 @@
+[tool.poetry]
+name = "mlservice"
+version = "0.1.0"
+description = ""
+authors = ["Bo Chen <bochen0909@gmail.com>"]
+readme = "README.md"
+
+[tool.poetry.dependencies]
+python = ">3.10"
+fastapi = "^0.115.7"
+uvicorn = "^0.34.0"
+
+
+[tool.poetry.group.dev.dependencies]
+pytest = "^8.3.4"
+httpx = "^0.28.1"
+pytest-asyncio = "^0.25.3"
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
