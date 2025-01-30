@@ -1,11 +1,17 @@
+"""
+Tests for tabml models.
+"""
 import pytest
 import os
 import json
 import pandas as pd
 import numpy as np
 import joblib
+from datetime import datetime
 from fastapi.testclient import TestClient
+from sklearn.linear_model import LogisticRegression
 from external_routes.sklearn.tab_model import RidgeModel
+from mlservice.core.tabml import TabModel, TabClassification
 from mlservice.main import setup_routes, app
 
 @pytest.fixture
@@ -13,11 +19,76 @@ def ridge_model():
     return RidgeModel(params={"hyperparameters": {"alpha": 1.0}, "columns": {"target": "target"}})
 
 @pytest.fixture
+def classification_model():
+    class TestClassification(TabClassification):
+        def __init__(self, params=None):
+            self._fitted = False
+            self.return_proba = True
+            super().__init__(params)
+            self.model = LogisticRegression()
+            
+        def _train(self, data):
+            """Implementation of training logic."""
+            if isinstance(data, str):
+                data = pd.read_csv(data)
+            features = self._infer_features_columns(data.columns)
+            X = data[features]
+            y = data[self.target_column]
+            self.model.fit(X, y)
+            self.fitted_ = True
+            
+            return {
+                "train_path": str(data) if isinstance(data, str) else None,
+                "timestamp": str(datetime.now()),
+                "model_path": None
+            }
+            
+        def _predict(self, data):
+            """Implementation of prediction logic."""
+            if isinstance(data, str):
+                data = pd.read_csv(data)
+            features = self._infer_features_columns(data.columns)
+            X = data[features]
+            predictions = pd.DataFrame()
+            predictions[self.prediction_column] = self.model.predict(X)
+            if self.return_proba:
+                predictions[self.predict_proba_column] = self.model.predict_proba(X)[:, 1]
+            return predictions
+
+        @property
+        def fitted_(self):
+            """Get the fitted state."""
+            return self._fitted
+
+        @fitted_.setter
+        def fitted_(self, value):
+            """Set the fitted state."""
+            self._fitted = value
+    
+    return TestClassification(params={
+        "columns": {
+            "target": "target",
+            "prediction": "pred",
+            "predict_proba": "prob"
+        }
+    })
+
+@pytest.fixture
 def sample_data():
     # Create synthetic regression data
     np.random.seed(42)
     X = np.random.randn(100, 2)
     y = 2 * X[:, 0] + 3 * X[:, 1] + np.random.randn(100) * 0.1
+    df = pd.DataFrame(X, columns=['feature1', 'feature2'])
+    df['target'] = y
+    return df
+
+@pytest.fixture
+def sample_classification_data():
+    # Create synthetic classification data
+    np.random.seed(42)
+    X = np.random.randn(100, 2)
+    y = (X[:, 0] + X[:, 1] > 0).astype(int)
     df = pd.DataFrame(X, columns=['feature1', 'feature2'])
     df['target'] = y
     return df
@@ -182,6 +253,10 @@ def test_feature_column_inference(ridge_model, sample_data):
     assert 'feature2' in features
     assert 'target' not in features
 
+    # Test inference with no columns
+    features = ridge_model._infer_features_columns(None)
+    assert features == []
+
 def test_target_column_handling(ridge_model, sample_data, tmp_path):
     os.environ['ML_HOME'] = str(tmp_path)
     
@@ -199,3 +274,51 @@ def test_target_column_handling(ridge_model, sample_data, tmp_path):
     prediction = ridge_model.predict(str(predict_path))
     assert isinstance(prediction, pd.DataFrame)
     assert ridge_model.prediction_column in prediction.columns
+
+def test_classification_model_properties(classification_model):
+    # Test predict_proba_column property
+    assert classification_model.predict_proba_column == "prob"
+    assert classification_model.prediction_column == "pred"
+    assert classification_model.target_column == "target"
+
+def test_classification_model_training(classification_model, sample_classification_data):
+    # Test model training
+    metadata = classification_model._train(sample_classification_data)
+    assert "timestamp" in metadata
+    assert classification_model.fitted_
+
+def test_classification_model_prediction(classification_model, sample_classification_data):
+    # First train the model
+    classification_model._train(sample_classification_data)
+    
+    # Test prediction with both prediction and probability
+    classification_model.return_proba = True
+    predictions = classification_model._predict(sample_classification_data)
+    assert classification_model.prediction_column in predictions.columns
+    assert classification_model.predict_proba_column in predictions.columns
+
+def test_classification_model_evaluation(classification_model, sample_classification_data):
+    # First train the model
+    classification_model._train(sample_classification_data)
+    
+    # Test evaluation with both columns
+    classification_model.return_proba = True
+    predictions = classification_model._predict(sample_classification_data)
+    test_data = pd.concat([sample_classification_data, predictions], axis=1)
+    metrics = classification_model._evaluate(test_data)
+    assert metrics['accuracy'] is not None
+    assert metrics['f1'] is not None
+    assert metrics['precision'] is not None
+    assert metrics['recall'] is not None
+    assert metrics['auc_score'] is not None
+
+    # Test evaluation with only prediction column
+    classification_model.return_proba = False
+    predictions = classification_model._predict(sample_classification_data)
+    test_data = pd.concat([sample_classification_data, predictions], axis=1)
+    metrics = classification_model._evaluate(test_data)
+    assert metrics['accuracy'] is not None
+    assert metrics['f1'] is None
+    assert metrics['precision'] is None
+    assert metrics['recall'] is None
+    assert metrics['auc_score'] is None
