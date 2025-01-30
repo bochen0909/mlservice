@@ -157,6 +157,12 @@ class TabModel(MLModel):
     def __init__(self, params=None):
         super().__init__(params)
 
+    def _set_feature_columns(self, columns: List[str]):
+        """Set feature columns used by the model."""
+        if 'columns' not in self.params:
+            self.params['columns'] = {}
+        self.params["columns"]["features"] = columns
+
     @property
     def feature_columns(self) -> List[str]:
         """Return feature columns used by the model."""
@@ -166,6 +172,14 @@ class TabModel(MLModel):
     def target_column(self) -> str:
         """Return target column used by the model."""
         return self.params.get("columns", {}).get("target", "target")
+
+    def _infer_features_columns(self, columns=None)->List[str]:
+        features = self.feature_columns
+        if features:
+            return features
+        if columns is None:
+            return []
+        return [col for col in columns if col not in [self.target_column, self.prediction_column, self.predict_proba_column]]
 
     @property
     def prediction_column(self) -> str:

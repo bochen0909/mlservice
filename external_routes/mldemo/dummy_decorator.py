@@ -22,5 +22,3 @@ class DummyModel(MLModel):
     def __str__(self):
         return f"DummyModel: {self.params}"
 
-# The router can be accessed as DummyModel.router
-dummy_router = DummyModel.router
