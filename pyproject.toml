@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "mlservice"
-version = "0.1.0"
+version = "0.1.1"
 description = ""
 authors = ["Bo Chen <bochen0909@gmail.com>"]
 readme = "README.md"
