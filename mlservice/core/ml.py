@@ -27,6 +27,21 @@ class EvalRequest(BaseModel):
     data_path: str
     model_path: str
 
+def model_endpoints(model_name: str):
+    """
+    Decorator to create FastAPI endpoints for an MLModel class.
+    
+    Args:
+        model_name: Name of the model for URL paths
+        
+    Returns:
+        Decorator function that wraps MLModel class and adds router
+    """
+    def decorator(model_class):
+        model_class.router = create_model_endpoints(model_class, model_name)
+        return model_class
+    return decorator
+
 def create_model_endpoints(model_class: Type["MLModel"], model_name: str) -> APIRouter:
     """
     Create FastAPI endpoints for an MLModel class and register them with registry.
