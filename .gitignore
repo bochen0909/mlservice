@@ -45,3 +45,4 @@ cdk.out/
 
 
 .coverage
+dist/
