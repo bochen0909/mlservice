@@ -1,6 +1,6 @@
-# MLService
+# PyMLService
 
-A FastAPI-based service for deploying machine learning models with dynamic route registration capabilities. MLService provides a flexible and extensible framework for serving ML models through REST APIs.
+A FastAPI-based service for deploying machine learning models with dynamic route registration capabilities. PyMLService provides a flexible and extensible framework for serving ML models through REST APIs.
 
 ## Features
 
@@ -37,6 +37,8 @@ poetry install
 
 Run the server with default settings:
 ```bash
+# Note: Even though the PyPI package is named 'pymlservice', 
+# we still use the internal module name 'mlservice'
 poetry run python -m mlservice.main
 ```
 
