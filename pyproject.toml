@@ -4,6 +4,9 @@ version = "0.1.1"
 description = ""
 authors = ["Bo Chen <bochen0909@gmail.com>"]
 readme = "README.md"
+packages = [
+    { include = "mlservice" }
+]
 
 [tool.poetry.dependencies]
 python = ">3.10"
