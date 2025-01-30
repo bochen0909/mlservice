@@ -57,7 +57,7 @@ def create_model_endpoints(model_class: Type["MLModel"], model_name: str) -> API
     
     router = APIRouter(prefix=f"/model/{model_name}")
     
-    @router.post("/train")
+    @router.post("/train", tags=["ML Model"])
     async def train_model(request: TrainRequest):
         try:
             model = model_class(request.params)
@@ -70,7 +70,7 @@ def create_model_endpoints(model_class: Type["MLModel"], model_name: str) -> API
         except Exception as e:
             raise HTTPException(status_code=500, detail=str(e))
     
-    @router.post("/predict")
+    @router.post("/predict", tags=["ML Model"])
     async def predict(request: PredictRequest):
         try:
             # Load latest model
@@ -84,7 +84,7 @@ def create_model_endpoints(model_class: Type["MLModel"], model_name: str) -> API
         except Exception as e:
             raise HTTPException(status_code=500, detail=str(e))
     
-    @router.post("/eval")
+    @router.post("/eval", tags=["ML Model"])
     async def evaluate(request: EvalRequest):
         try:
             # Load latest model
