@@ -37,18 +37,18 @@ def load_data(data_path: Optional[str]) -> Optional[Union[pd.DataFrame, Dict[str
     else:
         return data_path
 
-def load_model(model_path: str) -> 'MLModel':
-    """Load a saved MLModel instance.
+def load_model(model_path: str) -> Any:
+    """Load a saved model from a file.
     
     Args:
-        model_path: Path to the model directory containing model.joblib and params.json
+        model_path: Path to the model directory containing model.joblib
         
     Returns:
-        MLModel instance
+        Loaded model object
         
     Raises:
         FileNotFoundError: If model files are not found
-        ValueError: If model files are corrupted or incompatible
+        ValueError: If model files are corrupted
     """
     model_dir = Path(model_path)
     if not model_dir.exists():
@@ -56,18 +56,10 @@ def load_model(model_path: str) -> 'MLModel':
         
     model_file = model_dir / "model.joblib"
     
-    if not model_file.exists() :
+    if not model_file.exists():
         raise FileNotFoundError(f"Model files missing in: {model_path}")
         
     try:
-        model = joblib.load(model_file)
-            
-        # Validate loaded model
-        if not isinstance(model, MLModel):
-            raise ValueError("Loaded object is not an MLModel instance")
-            
-        return model
-        
+        return joblib.load(model_file)
     except Exception as e:
-        raise ValueError(f"Error loading model: {str(e)}")
-
+        raise ValueError(f"Error loading model file: {str(e)}")

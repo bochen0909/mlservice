@@ -4,7 +4,7 @@ from datetime import datetime
 import uuid
 import json
 from pathlib import Path
-from typing import Optional, Union, Dict, Any, Type
+from typing import Optional, Union, Dict, Any, Type, cast
 
 import pandas as pd
 import joblib
@@ -30,7 +30,7 @@ class EvalRequest(BaseModel):
 
 def create_model_endpoints(model_class: Type["MLModel"], model_name: str) -> APIRouter:
     """
-    Create FastAPI endpoints for an MLModel class.
+    Create FastAPI endpoints for an MLModel class and register them with registry.
     
     Args:
         model_class: MLModel class to create endpoints for
@@ -39,6 +39,8 @@ def create_model_endpoints(model_class: Type["MLModel"], model_name: str) -> API
     Returns:
         FastAPI router with /train, /predict, and /eval endpoints
     """
+    from mlservice.core.registry import registry
+    
     router = APIRouter(prefix=f"/model/{model_name}")
     
     @router.post("/train")
@@ -59,6 +61,8 @@ def create_model_endpoints(model_class: Type["MLModel"], model_name: str) -> API
         try:
             # Load latest model
             model = load_model(request.model_path)
+            if not isinstance(model, MLModel):
+                raise ValueError("Loaded object is not an MLModel instance")
             if not model:
                 raise HTTPException(status_code=404, detail=f"Model {model_name} not found")
             result = model.predict(data_path=request.data_path)
@@ -71,12 +75,28 @@ def create_model_endpoints(model_class: Type["MLModel"], model_name: str) -> API
         try:
             # Load latest model
             model = load_model(request.model_path)
+            if not isinstance(model, MLModel):
+                raise ValueError("Loaded object is not an MLModel instance")
             if not model:
                 raise HTTPException(status_code=404, detail=f"Model {model_name} not found")
             result = model.evaluate(data_path=request.data_path)
             return result
         except Exception as e:
             raise HTTPException(status_code=500, detail=str(e))
+    
+    # Register routes in registry system
+    for route in router.routes:
+        methods = list(route.methods)  # Convert set to list
+        registry._routes.append({
+            'path': route.path_format,
+            'methods': methods,
+            'handler': route.endpoint,
+            'kwargs': {
+                'response_model': route.response_model,
+                'status_code': route.status_code,
+                'tags': route.tags
+            }
+        })
     
     return router
 

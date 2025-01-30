@@ -67,7 +67,7 @@ def test_multiple_methods():
 @pytest.fixture
 def client():
     """Create a test client with all routes registered."""
-    setup_routes(['external_routes', 'external_routes.demo'])  # Import both external and demo routes
+    setup_routes(['external_routes'])  
     return TestClient(app)
 
 def test_demo_routes(client):

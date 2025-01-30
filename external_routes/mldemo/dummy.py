@@ -2,6 +2,7 @@ from typing import Any, Dict, Optional
 
 from fastapi import APIRouter
 from mlservice.core import MLModel, create_model_endpoints
+from mlservice.core.registry import registry
 
 class DummyModel(MLModel):
     def __init__(self, params=None):
