@@ -4,9 +4,8 @@ from datetime import datetime
 import uuid
 import json
 from pathlib import Path
-from typing import Optional, Union, Dict, Any, Type, cast
+from typing import Optional, Union, Dict, Any, Type
 
-import pandas as pd
 import joblib
 from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel
