@@ -1,6 +1,7 @@
 import os
 from abc import ABC, abstractmethod
 from datetime import datetime
+import traceback
 import uuid
 import json
 from pathlib import Path
@@ -68,6 +69,7 @@ def create_model_endpoints(model_class: Type["MLModel"], model_name: str) -> API
             )
             return result
         except Exception as e:
+            traceback.print_exc()
             raise HTTPException(status_code=500, detail=str(e))
     
     @router.post("/predict", tags=["ML Model"])
@@ -76,12 +78,13 @@ def create_model_endpoints(model_class: Type["MLModel"], model_name: str) -> API
             # Load latest model
             model = load_model(request.model_path)
             if not isinstance(model, MLModel):
-                raise ValueError("Loaded object is not an MLModel instance")
+                raise ValueError(f"Loaded object is not an MLModel instance: {type(model)}")
             if not model:
                 raise HTTPException(status_code=404, detail=f"Model {model_name} not found")
-            result = model.predict(data_path=request.data_path)
+            result = model.predict(data=request.data_path)
             return result
         except Exception as e:
+            traceback.print_exc()
             raise HTTPException(status_code=500, detail=str(e))
     
     @router.post("/eval", tags=["ML Model"])
@@ -93,9 +96,10 @@ def create_model_endpoints(model_class: Type["MLModel"], model_name: str) -> API
                 raise ValueError("Loaded object is not an MLModel instance")
             if not model:
                 raise HTTPException(status_code=404, detail=f"Model {model_name} not found")
-            result = model.evaluate(data_path=request.data_path)
+            result = model.evaluate(data=request.data_path)
             return result
         except Exception as e:
+            traceback.print_exc()
             raise HTTPException(status_code=500, detail=str(e))
     
     # Register routes in registry system
@@ -198,7 +202,7 @@ class MLModel(ABC):
         """Implementation of model training logic."""
         pass
         
-    def predict(self, data_path: str) -> Dict[str, Any]:
+    def predict(self, data) -> Dict[str, Any]:
         """Make predictions on new data.
         
         Args:
@@ -209,7 +213,8 @@ class MLModel(ABC):
         """
         if not self.fitted_:
             raise ValueError("Model must be trained before prediction")
-        data = load_data(data_path)
+        if isinstance(data, str):
+            data = load_data(data)
         return self._predict(data)
         
     @abstractmethod
@@ -217,7 +222,7 @@ class MLModel(ABC):
         """Implementation of prediction logic."""
         pass
         
-    def evaluate(self, data_path: str) -> Dict[str, float]:
+    def evaluate(self, data) -> Dict[str, float]:
         """Evaluate model on new data.
         
         Args:
@@ -228,7 +233,8 @@ class MLModel(ABC):
         """
         if not self.fitted_:
             raise ValueError("Model must be trained before evaluation")
-        data = load_data(data_path)
+        if isinstance(data, str):
+            data = load_data(data)
         return self._evaluate(data)
         
     @abstractmethod

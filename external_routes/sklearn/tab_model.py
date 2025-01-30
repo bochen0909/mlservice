@@ -1,7 +1,8 @@
 from typing import Any, Dict, Optional
 from sklearn.linear_model import Ridge
 import pandas as pd
-from mlservice.core import TabRegression,TabClassification
+from mlservice.core.tabml import TabRegression
+from mlservice.core.ml import MLModel
 from mlservice.core.ml import model_endpoints
 
 @model_endpoints("sklearn/ridge")
