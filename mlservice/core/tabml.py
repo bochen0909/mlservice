@@ -80,7 +80,7 @@ class TabRegression(TabModel):
 
     def _evaluate(self, data):
         """Implementation of evaluation logic."""
-        df = self.predict(data)
+        df = self._predict(data)
         gt = data[self.target_column].values
         pred = df[self.prediction_column].values
 
@@ -96,7 +96,7 @@ class TabClassification(TabModel):
 
     def _evaluate(self, data):
         """Implementation of evaluation logic."""
-        df = self.predict(data)
+        df = self._predict(data)
         gt = data[self.target_column].values
         accuracy = None
         f1 = None

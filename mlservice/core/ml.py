@@ -1,6 +1,7 @@
 import os
 from abc import ABC, abstractmethod
 from datetime import datetime
+import pickle
 import traceback
 import uuid
 import json
@@ -201,21 +202,39 @@ class MLModel(ABC):
     def _train(self, train_data: Any, eval_data: Optional[Any] = None) -> None:
         """Implementation of model training logic."""
         pass
-        
-    def predict(self, data) -> Dict[str, Any]:
+    
+    def _get_prediction_path(self) -> str:
+        """Generate prediction file path."""
+        ml_home = os.getenv('ML_HOME')
+        if not ml_home:
+            raise ValueError("ML_HOME environment variable not set")
+            
+        today = datetime.now()
+        predict_dir = Path(ml_home) / "predictions" / \
+                      str(today.year) / f"{today.month:02d}" / f"{today.day:02d}"
+        predict_dir.mkdir(parents=True, exist_ok=True)
+        return str(predict_dir / f"{uuid.uuid4()}.pkl")
+    
+    def predict(self, data) -> str:
         """Make predictions on new data.
         
         Args:
             data_path: Path to input data
             
         Returns:
-            Dict containing predictions
+            prediction saved path
         """
         if not self.fitted_:
             raise ValueError("Model must be trained before prediction")
         if isinstance(data, str):
             data = load_data(data)
-        return self._predict(data)
+        predicted =  self._predict(data)
+        # Save prediction to file
+        predict_path = self._get_prediction_path()
+        with open(predict_path, 'wb') as f:
+            pickle.dump(predicted, f)
+        return predict_path
+                                    
         
     @abstractmethod
     def _predict(self, data: Any) -> Dict[str, Any]:

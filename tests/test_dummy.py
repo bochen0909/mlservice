@@ -2,9 +2,14 @@ import pytest
 import os
 import pandas as pd
 import joblib
+import pickle
 from fastapi.testclient import TestClient
 from external_routes.mldemo.dummy import DummyModel
 from mlservice.main import setup_routes, app
+
+def read_prediction_file(file_path):
+    with open(file_path, 'rb') as f:
+        return pickle.load(f)
 # Existing fixtures
 @pytest.fixture
 def dummy_model():
@@ -50,7 +55,11 @@ def test_predict(dummy_model, sample_data, tmp_path):
     predict_path = tmp_path / "predict.csv"
     sample_data.to_csv(predict_path)
     
-    prediction = dummy_model.predict(str(predict_path))
+    prediction_file_path = dummy_model.predict(str(predict_path))
+    assert isinstance(prediction_file_path, str)
+    assert os.path.exists(prediction_file_path)
+    
+    prediction = read_prediction_file(prediction_file_path)
     assert prediction == {"message": "Dummy model prediction"}
 
 def test_evaluate(dummy_model, sample_data, tmp_path):
@@ -90,8 +99,12 @@ def test_load_model(dummy_model, sample_data, tmp_path):
     # Test loaded model predictions
     predict_path = tmp_path / "predict.csv"
     sample_data.to_csv(predict_path)
-    prediction = loaded_model.predict(str(predict_path))
+    prediction_file_path = loaded_model.predict(str(predict_path))
     
+    assert isinstance(prediction_file_path, str)
+    assert os.path.exists(prediction_file_path)
+    
+    prediction = read_prediction_file(prediction_file_path)
     assert prediction == {"message": "Dummy model prediction"}
     assert isinstance(loaded_model, DummyModel)
 
@@ -149,7 +162,12 @@ def test_predict_endpoint(client, sample_data, tmp_path):
     )
     
     assert response.status_code == 200
-    assert response.json() == {"message": "Dummy model prediction"}
+    prediction_file_path = response.json()
+    assert isinstance(prediction_file_path, str)
+    assert os.path.exists(prediction_file_path)
+    
+    prediction = read_prediction_file(prediction_file_path)
+    assert prediction == {"message": "Dummy model prediction"}
 
 def test_eval_endpoint(client, sample_data, tmp_path):
     os.environ['ML_HOME'] = str(tmp_path)
